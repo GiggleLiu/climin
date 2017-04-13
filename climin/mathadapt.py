@@ -104,3 +104,9 @@ def isnan(x):
         return gp.isnan(x)
     else:
         return np.isnan(x)
+
+def exp(x):
+    if not isinstance(x, np.ndarray):
+        return gp.exp(x)
+    else:
+        return np.exp(x)

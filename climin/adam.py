@@ -176,7 +176,7 @@ class Adam(Minimizer):
 
             gradient = self.fprime(self.wrt, *args, **kwargs)
             self.est_mom1_b = dm1 * gradient + (1 - dm1) * est_mom1_b_m1
-            self.est_mom2_b = dm2 * gradient ** 2 + (1 - dm2) * est_mom2_b_m1
+            self.est_mom2_b = dm2 * abs(gradient) ** 2 + (1 - dm2) * est_mom2_b_m1
 
             step_t = self.step_rate * (1 - (1 - dm2) ** t) ** 0.5 / \
                      (1 - (1 - dm1) ** t)

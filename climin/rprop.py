@@ -3,6 +3,7 @@
 """This module contains the Resilient propagation optimizer."""
 
 from __future__ import absolute_import
+import numpy as np
 
 from . import mathadapt as ma
 from .base import Minimizer
@@ -126,13 +127,13 @@ class Rprop(Minimizer):
         for args, kwargs in self.args:
             gradient_m1 = self.gradient
             self.gradient = self.fprime(self.wrt, *args, **kwargs)
-            gradprod = gradient_m1 * self.gradient
+            gradprod = (gradient_m1.conj() * self.gradient).real
 
             self.changes[gradprod > 0] *= self.step_grow
             self.changes[gradprod < 0] *= self.step_shrink
             self.changes = ma.clip(self.changes, self.min_step, self.max_step)
 
-            step = -self.changes * ma.sign(self.gradient)
+            step = -self.changes * (np.exp(1j*np.angle(self.gradient)) if np.iscomplexobj(self.wrt) else ma.sign(self.gradient))
             self.wrt += step
 
             self.n_iter += 1

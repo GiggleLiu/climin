@@ -90,6 +90,30 @@ class Quadratic(object):
     def solved(self, tolerance=0.01):
         return (abs(self.fprime(self.pars)) < tolerance).all()
 
+class ComplexQuadratic(object):
+    def __init__(self, dim, seed=3):
+        np.random.seed(3)
+        H=np.random.random([dim,dim])+1j*np.random.random([dim,dim])
+        H=(H+H.T.conj())/dim
+        b=np.random.random(dim)+1j*np.random.random(dim)
+        self.H=H
+        self.b=b
+        self.pars=np.random.random(dim)+1j*np.random.random(dim)
+
+    def f(self, x):
+        H,b=self.H,self.b
+        r=H.dot(x)-b
+        return sum(r.conj()*r).real
+
+    def fprime(self, x):
+        H,b=self.H,self.b
+        return H.T.conj().dot((H.dot(x)-b))
+
+    def f_Hp(self, pars, p):
+        return np.dot(self.H, p)
+
+    def solved(self, tolerance=0.01):
+        return (self.f(self.pars) < tolerance).all()
 
 class BigQuadratic(object):
 
@@ -113,7 +137,6 @@ class BigQuadratic(object):
 
     def solved(self, tolerance=0.01):
         return (abs(self.fprime(self.pars)) < tolerance).all()
-
 
 class Rosenbrock(object):
 

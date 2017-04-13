@@ -4,7 +4,7 @@ import itertools
 
 from climin import Rprop
 
-from .losses import Quadratic, LogisticRegression, Rosenbrock
+from .losses import Quadratic, LogisticRegression, Rosenbrock, ComplexQuadratic
 from .common import continuation
 
 
@@ -17,6 +17,15 @@ def test_rprop_quadratic():
             break
     assert obj.solved(), 'did not find solution'
 
+def test_rprop_cquadratic():
+    obj = ComplexQuadratic(10)
+    opt = Rprop(obj.pars, obj.fprime, step_shrink=0.5, step_grow=1.2,
+                min_step=1e-6, max_step=0.1)
+    for i, info in enumerate(opt):
+        print(obj.f(obj.pars))
+        if i > 10000:
+            break
+    assert obj.solved(0.1), 'did not find solution'
 
 def test_rprop_rosen():
     obj = Rosenbrock()
@@ -45,3 +54,5 @@ def test_rprop_continue():
                 min_step=1e-6, max_step=0.1, args=args)
 
     continuation(opt)
+
+test_rprop_quadratic()

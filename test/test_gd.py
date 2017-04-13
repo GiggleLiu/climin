@@ -6,7 +6,7 @@ import nose
 
 from climin import GradientDescent
 
-from .losses import Quadratic, LogisticRegression, Rosenbrock
+from .losses import Quadratic, ComplexQuadratic, LogisticRegression, Rosenbrock
 from .common import continuation
 
 
@@ -19,6 +19,15 @@ def test_gd_quadratic():
             break
     assert obj.solved(), 'did not find solution'
 
+def test_gd_cquadratic():
+    obj = ComplexQuadratic(10)
+    opt = GradientDescent(
+        obj.pars, obj.fprime, step_rate=0.5, momentum=0.9)
+    for i, info in enumerate(opt):
+        print(obj.f(obj.pars))
+        if i > 5000:
+            break
+    assert obj.solved(0.1), 'did not find solution'
 
 @nose.tools.nottest
 def test_gd_rosen():
@@ -87,3 +96,5 @@ def test_gd_continue():
         args=args)
 
     continuation(opt)
+
+test_gd_cquadratic()

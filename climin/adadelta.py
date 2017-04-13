@@ -113,7 +113,7 @@ class Adadelta(Minimizer):
 
             gradient = self.fprime(self.wrt, *args, **kwargs)
 
-            self.gms = (d * self.gms) + (1 - d) * gradient ** 2
+            self.gms = (d * self.gms) + (1 - d) * abs(gradient) ** 2
             step2 = sqrt(self.sms + o) / sqrt(self.gms + o) * gradient * self.step_rate
             self.wrt -= step2
 
