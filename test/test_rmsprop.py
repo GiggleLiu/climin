@@ -32,10 +32,11 @@ def test_rmsprop_continue():
 
 def test_rmsprop_cquadratic():
     obj = ComplexQuadratic(10)
-    opt = RmsProp(obj.pars, obj.fprime, 0.01, 0.9)
+    opt = RmsProp(obj.pars, obj.fprime, 0.01, 0.9,momentum=0.9)
     for i, info in enumerate(opt):
         print(obj.f(opt.wrt))
         if i > 10000:
             break
     assert obj.solved(0.15), 'did not find solution'
 
+test_rmsprop_cquadratic()

@@ -132,18 +132,18 @@ class Bfgs(Minimizer):
     def find_direction(self, grad_m1, grad, step, inv_hessian):
         H = self.inv_hessian
         grad_diff = grad - grad_m1
-        ys = np.inner(grad_diff, step)
+        ys = np.inner(grad_diff.conj(), step)
         Hy = np.dot(H, grad_diff)
-        yHy = np.inner(grad_diff, Hy)
-        H += (ys + yHy) * np.outer(step, step) / ys ** 2
-        H -= (np.outer(Hy, step) + np.outer(step, Hy)) / ys
+        yHy = np.inner(grad_diff.conj(), Hy)
+        H += (ys + yHy) * np.outer(step, step.conj()) / ys ** 2
+        H -= (np.outer(Hy, step.conj()) + np.outer(step, Hy.conj())) / ys
         direction = -np.dot(H, grad)
         return direction, {'gradient_diff': grad_diff}
 
     def __iter__(self):
         args, kwargs = next(self.args)
         grad = self.fprime(self.wrt, *args, **kwargs)
-        grad_m1 = scipy.zeros(grad.shape)
+        grad_m1 = scipy.zeros_like(grad)
 
         if self.inv_hessian is None:
             self.inv_hessian = scipy.eye(grad.shape[0])
@@ -204,14 +204,14 @@ class Sbfgs(Bfgs):
         # TODO document
         H = inv_hessian
         grad_diff = grad - grad_m1
-        ys = np.inner(grad_diff, step)
+        ys = np.inner(grad_diff.conj(), step)
         Hy = np.dot(H, grad_diff)
-        yHy = np.inner(grad_diff, Hy)
+        yHy = np.inner(grad_diff.conj(), Hy)
         gamma = ys / yHy
         v = scipy.sqrt(yHy) * (step / ys - Hy / yHy)
         v = scipy.real(v)
-        H[:] = gamma * (H - np.outer(Hy, Hy) / yHy + np.outer(v, v))
-        H += np.outer(step, step) / ys
+        H[:] = gamma * (H - np.outer(Hy, Hy.conj()) / yHy + np.outer(v, v.conj()))
+        H += np.outer(step, step.conj()) / ys
         direction = -np.dot(H, grad)
         return direction, {}
 
@@ -314,13 +314,13 @@ class Lbfgs(Minimizer):
 
         # TODO: vectorize this function
         for i in idxs:
-            rho[i] = 1 / scipy.inner(grad_diffs[i], steps[i])
+            rho[i] = 1 / scipy.inner(grad_diffs[i].conj(), steps[i])
 
         # TODO: find a good name for this variable as well.
         alpha = scipy.empty(n_current_factors)
 
         for i in idxs[::-1]:
-            alpha[i] = rho[i] * scipy.inner(steps[i], grad)
+            alpha[i] = rho[i] * scipy.inner(steps[i].conj(), grad)
             grad -= alpha[i] * grad_diffs[i]
         z = hessian_diag * grad
 
@@ -328,7 +328,7 @@ class Lbfgs(Minimizer):
         beta = scipy.empty(n_current_factors)
 
         for i in idxs:
-            beta[i] = rho[i] * scipy.inner(grad_diffs[i], z)
+            beta[i] = rho[i] * scipy.inner(grad_diffs[i].conj(), z)
             z += steps[i] * (alpha[i] - beta[i])
 
         return z, {}
@@ -336,14 +336,14 @@ class Lbfgs(Minimizer):
     def __iter__(self):
         args, kwargs = next(self.args)
         grad = self.fprime(self.wrt, *args, **kwargs)
-        grad_m1 = scipy.zeros(grad.shape)
+        grad_m1 = scipy.zeros_like(grad)
         factor_shape = self.n_factors, self.wrt.shape[0]
         grad_diffs = scipy.zeros(factor_shape)
         steps = scipy.zeros(factor_shape)
         hessian_diag = self.initial_hessian_diag
         step_length = None
-        step = scipy.empty(grad.shape)
-        grad_diff = scipy.empty(grad.shape)
+        step = scipy.empty_like(grad)
+        grad_diff = scipy.empty_like(grad)
 
         # We need to keep track in which order the different statistics
         # from different runs are saved.
@@ -366,7 +366,7 @@ class Lbfgs(Minimizer):
                 direction = -grad
                 info = {}
             else:
-                sTgd = scipy.inner(step, grad_diff)
+                sTgd = scipy.inner(step.conj(), grad_diff)
                 if sTgd > 1E-10:
                     # Don't do an update if this value is too small.
                     # Determine index for the current update.
@@ -383,7 +383,7 @@ class Lbfgs(Minimizer):
                     idxs.append(this_idx)
                     grad_diffs[this_idx] = grad_diff
                     steps[this_idx] = step
-                    hessian_diag = sTgd / scipy.inner(grad_diff, grad_diff)
+                    hessian_diag = sTgd / scipy.inner(grad_diff.conj(), grad_diff)
 
                 direction, info = self.find_direction(
                     grad_diffs, steps, -grad, hessian_diag, idxs)

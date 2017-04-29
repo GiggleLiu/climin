@@ -156,8 +156,8 @@ class ConjugateGradient(Minimizer):
 
         for i in range(self.wrt.size):
             Hp = self.f_Hp(direction)
-            ry = np.dot(grad, y)
-            pHp = np.inner(direction, Hp)
+            ry = np.dot(grad.conj(), y)
+            pHp = np.inner(direction.conj(), Hp)
             step_length = ry / pHp
             self.wrt += step_length * direction
 
@@ -169,7 +169,7 @@ class ConjugateGradient(Minimizer):
                 grad += step_length * Hp
 
             y = self.solve(grad)
-            beta = np.dot(grad, y) / ry
+            beta = np.dot(grad.conj(), y) / ry
 
             direction = - y + beta * direction
 
@@ -268,16 +268,16 @@ class NonlinearConjugateGradient(Minimizer):
     def find_direction(self, grad_m1, grad, direction_m1):
         # Computation of beta as a compromise between Fletcher-Reeves
         # and Polak-Ribiere.
-        grad_norm_m1 = np.dot(grad_m1, grad_m1)
+        grad_norm_m1 = np.dot(grad_m1.conj(), grad_m1)
         grad_diff = grad - grad_m1
-        betaFR = np.dot(grad, grad) / grad_norm_m1
-        betaPR = np.dot(grad, grad_diff) / grad_norm_m1
-        betaHS = np.dot(grad, grad_diff) / np.dot(direction_m1, grad_diff)
+        betaFR = np.dot(grad.conj(), grad) / grad_norm_m1
+        betaPR = np.dot(grad.conj(), grad_diff) / grad_norm_m1
+        betaHS = np.dot(grad.conj(), grad_diff) / np.dot(direction_m1.conj(), grad_diff)
         beta = max(-betaFR, min(betaPR, betaFR))
 
         # Restart if not a direction of sufficient descent, ie if two
         # consecutive gradients are far from orthogonal.
-        if np.dot(grad, grad_m1) / grad_norm_m1 > 0.1:
+        if np.dot(grad.conj(), grad_m1) / grad_norm_m1 > 0.1:
             beta = 0
 
         direction = -grad + beta * direction_m1
@@ -286,7 +286,7 @@ class NonlinearConjugateGradient(Minimizer):
     def __iter__(self):
         args, kwargs = next(self.args)
         grad = self.fprime(self.wrt, *args, **kwargs)
-        grad_m1 = np.zeros(grad.shape)
+        grad_m1 = np.zeros_like(grad)
         loss = self.f(self.wrt, *args, **kwargs)
         loss_m1 = 0
 
@@ -301,7 +301,7 @@ class NonlinearConjugateGradient(Minimizer):
                 break
 
             # Line search minimization.
-            initialization = 2 * (loss - loss_m1) / np.dot(grad, direction)
+            initialization = 2 * (loss - loss_m1) / np.dot(grad.conj(), direction)
             initialization = min(1, initialization)
             step_length = self.line_search.search(
                 direction, initialization,  args, kwargs)
